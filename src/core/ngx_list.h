@@ -12,22 +12,28 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/*
+ * 对下面的 ngx_list_part_s 结构体做了一个类型定义，新类型名定义为 ngx_list_part_t 
+ */
 typedef struct ngx_list_part_s  ngx_list_part_t;
-
+/*
+ * 链表中的一个元素 
+ */
 struct ngx_list_part_s {
-    void             *elts;
-    ngx_uint_t        nelts;
-    ngx_list_part_t  *next;
+    void             *elts;     //指向数组的起始地址
+    ngx_uint_t        nelts;    //表示数组中已经使用了多少个元素，nelts必须小于 ngx_list_t 结构体中的nalloc
+    ngx_list_part_t  *next;     //下一个链表元素 ngx_list_part_t 的地址
 };
 
-
+/*
+ * 链表容器，描述整个链表 
+ */
 typedef struct {
-    ngx_list_part_t  *last;
-    ngx_list_part_t   part;
-    size_t            size;
-    ngx_uint_t        nalloc;
-    ngx_pool_t       *pool;
+    ngx_list_part_t  *last;     //指向链表的最后一个元素
+    ngx_list_part_t   part;     //俩表的收个元素
+    size_t            size;     //限制数组里面的每个项占用的空间大小。用户存储一个数据所占用的字节数必须小于等于size
+    ngx_uint_t        nalloc;   //每个ngx_list_part_t 数组的容量，即最多能存多少个数据
+    ngx_pool_t       *pool;     //链表中管理内存分配的内存池对象。用户要存放的数据占用的内存都是由pool分配的
 } ngx_list_t;
 
 

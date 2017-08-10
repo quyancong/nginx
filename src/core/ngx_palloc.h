@@ -45,23 +45,28 @@ struct ngx_pool_large_s {
     void                 *alloc;
 };
 
-
+/*
+ * 内存池数据块结构
+ */
 typedef struct {
-    u_char               *last;
-    u_char               *end;
-    ngx_pool_t           *next;
-    ngx_uint_t            failed;
+    u_char               *last;     //当前内存池数据块分配到此处，下一次分配从这里继续分配
+    u_char               *end;      //当前内存池数据块的结束为止。 last指针必须在 end指针的范围之内
+    ngx_pool_t           *next;     //指向下一个内存池数据块。这里为什么用 ngx_pool_t 而不是用 ngx_pool_data_t 声明指针？因为这里 ngx_pool_t 结构体的开头部分是 ngx_pool_data_t ，因此 ngx_pool_t 的指针可以用于操作 ngx_pool_data_t结构体变量。ngx_pool_t可以理解为一个”父结构体“
+    ngx_uint_t            failed;   //内存块分配的时候大小不够，导致分配失败的次数。
 } ngx_pool_data_t;
 
-
+/*
+ * 内存池头部结构。它开头包含一个内存池数据块结构
+ * typedef struct ngx_pool_s        ngx_pool_t;
+ */
 struct ngx_pool_s {
-    ngx_pool_data_t       d;
-    size_t                max;
-    ngx_pool_t           *current;
-    ngx_chain_t          *chain;
-    ngx_pool_large_t     *large;
-    ngx_pool_cleanup_t   *cleanup;
-    ngx_log_t            *log;
+    ngx_pool_data_t       d;        //内存池数据块
+    size_t                max;      //内存池数据块的最大值。  size_t 是 unsigned long
+    ngx_pool_t           *current;  //指向当前的内存池
+    ngx_chain_t          *chain;    //该指针挂接一个ngx_chain_t结构  
+    ngx_pool_large_t     *large;    //指向大块内存块链表。大于内存池数据块的数据，单独申请大块内存块
+    ngx_pool_cleanup_t   *cleanup;  //清理数据的回调函数
+    ngx_log_t            *log;      //日志指针
 };
 
 

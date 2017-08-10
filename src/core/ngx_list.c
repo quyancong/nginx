@@ -8,11 +8,14 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+/*
+ * 创建新的链表
+ *
+ */
 ngx_list_t *
 ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
 {
-    ngx_list_t  *list;
+    ngx_list_t  *list;  //声明一个指向新建链表的指针
 
     list = ngx_palloc(pool, sizeof(ngx_list_t));
     if (list == NULL) {

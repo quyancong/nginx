@@ -12,26 +12,35 @@
 static void *ngx_palloc_block(ngx_pool_t *pool, size_t size);
 static void *ngx_palloc_large(ngx_pool_t *pool, size_t size);
 
-
+/*
+ * 创建nginx内存池
+ * @param size  内存池头部（包括收个内存数据块可分配内存）的大小
+ * @param *log  
+ */
 ngx_pool_t *
 ngx_create_pool(size_t size, ngx_log_t *log)
 {
-    ngx_pool_t  *p;
+    ngx_pool_t  *p;     //内存池指针，指向一个内存池。
 
-    p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);
+    p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);    // 分配数据对齐的内存地址，地址必须是16的倍数，也就是二进制地址的最后四位是0。NGX_POOL_ALIGNMENT 是内存池校准对齐常量，值为 16
     if (p == NULL) {
         return NULL;
     }
+    //sizeof(ngx_pool_t) = 40B	sizeof(ngx_pool_data_t) = 16B
+    //   结构体指针用 -> 引用结构体内的变量。结构体变量则用 . 引用结构体内的变量
+    //(u_char *) p  是强制将p转换为无符号字符的指针，这样 p->d.last 也就是无符号字符指针了。
+    p->d.last = (u_char *) p + sizeof(ngx_pool_t);  //第一个内存数据块的下一内存分配起始地址，指向内存池头的末尾（可以参看内存池的结构图理解http://abumaster.com/2017/06/08/Nginx%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0-%E5%86%85%E5%AD%98%E6%B1%A0/）
+    p->d.end = (u_char *) p + size; //指向内存池数据块的结尾。此处size应该大于内存头的大小40B
+    p->d.next = NULL;   //下一个内存数据块暂时没分配
+    p->d.failed = 0;    //分配内存失败次数初始化为0
 
-    p->d.last = (u_char *) p + sizeof(ngx_pool_t);
-    p->d.end = (u_char *) p + size;
-    p->d.next = NULL;
-    p->d.failed = 0;
+    size = size - sizeof(ngx_pool_t);   //整个创建内存池的分配的内存大小 - 内存池头部结构体占用的空间 = 第一个数据块可以分配最大内存字节数
 
-    size = size - sizeof(ngx_pool_t);
-    p->max = (size < NGX_MAX_ALLOC_FROM_POOL) ? size : NGX_MAX_ALLOC_FROM_POOL;
+    // #define NGX_MAX_ALLOC_FROM_POOL  (ngx_pagesize - 1)
+    // ngx_pagesize = getpagesize()   当前系统一页内存是多少字节
+    p->max = (size < NGX_MAX_ALLOC_FROM_POOL) ? size : NGX_MAX_ALLOC_FROM_POOL; //如果第一个数据块的内存字节数 小于系统一页内存的容量，则就是当前数据块的字节数，否则max是当前系统一页内存的容量。  即max 最大只能是当前系统一页内存的字节数减1
 
-    p->current = p;
+    p->current = p; //指向当前内存池
     p->chain = NULL;
     p->large = NULL;
     p->cleanup = NULL;

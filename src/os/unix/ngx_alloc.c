@@ -54,7 +54,7 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
     void  *p;
     int    err;
 
-    err = posix_memalign(&p, alignment, size);
+    err = posix_memalign(&p, alignment, size);  //posix_memalign c的标准库函数，成功时会返回size字节的动态内存,并且这块内存的地址是alignment的倍数。数据对齐的概念（http://blog.csdn.net/wallwind/article/details/7461701）
 
     if (err) {
         ngx_log_error(NGX_LOG_EMERG, log, err,
@@ -75,7 +75,7 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
     void  *p;
 
-    p = memalign(alignment, size);
+    p = memalign(alignment, size);  //和posix_memalign类似，不同是其将分配好的内存块首地址做为返回值。 在GNU系统中，malloc或realloc返回的内存块地址都是8的倍数（如果是64位系统，则为16的倍数）。如果你需要更大的粒度，请使用memalign或valloc。这些函数在头文件“stdlib.h”中声明。
     if (p == NULL) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
                       "memalign(%uz, %uz) failed", alignment, size);
