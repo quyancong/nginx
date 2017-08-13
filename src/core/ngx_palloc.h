@@ -40,9 +40,10 @@ struct ngx_pool_cleanup_s {
 
 typedef struct ngx_pool_large_s  ngx_pool_large_t;
 
+//内存池的大块内存结构体
 struct ngx_pool_large_s {
-    ngx_pool_large_t     *next;
-    void                 *alloc;
+    ngx_pool_large_t     *next;     //指向下一个大块内存。所有大块内存组成链表
+    void                 *alloc;    //指向实际分配的大块内存数据区
 };
 
 /*

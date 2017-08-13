@@ -121,67 +121,87 @@ ngx_reset_pool(ngx_pool_t *pool)
     }
 }
 
-
+/*
+ * 分配内存
+ * @param *pool 内存池指针
+ * @param size  分配的大小
+ */
 void *
 ngx_palloc(ngx_pool_t *pool, size_t size)
 {
     u_char      *m;
     ngx_pool_t  *p;
 
-    if (size <= pool->max) {
+    if (size <= pool->max) { //如果分配的内存小于内存池数据块的大小（最大是系统内存一页的大小）
 
         p = pool->current;
 
         do {
-            m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);
+            //ngx_align_ptr 是内存对齐宏。该处返回一个内存对齐的开始地址
+            m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);    //#define NGX_ALIGNMENT sizeof(unsigned long)
 
-            if ((size_t) (p->d.end - m) >= size) {
-                p->d.last = m + size;
+            if ((size_t) (p->d.end - m) >= size) {  //如果内存数据库的尾部地址 减去 分配的内存对齐的开始地址 大于 要分配的内存大小。则说明剩余的内存足够分配。
+                p->d.last = m + size;   //可分配的内存的开始指针(last)指到 分配的对齐地址+分配的大小 的位置。下次分配从这里开始继续分配
 
-                return m;
+                return m;   //返回此次分配的内存的首地址。
             }
-
+            //如果本内存数据块不够分配的。则指向当前待分配的内存数据块的指针p 指到下一个内存数据块。如果下一个内存数据块存在，则继续下个循环，进行内存分配，否则调用ngx_palloc_block
             p = p->d.next;
 
         } while (p);
 
+        //如果遍历完内存池还是没有合适的大小的可以分配。则新建一个内存数据块挂接到内存池上，并分配相应的内存。
         return ngx_palloc_block(pool, size);
     }
 
+    //如果要分配的内存大小大于内存池限制分配的最大值。则分配大内存块
     return ngx_palloc_large(pool, size);
 }
 
-
+/*
+ * 从内存池申请内存
+ * @desc 用户可以调用ngx_palloc()向内存池申请内存，这个函数会判断用户申请的是小块内存还是大块内存。如果用户申请的是小块内存，那么就会从小块内存链表中查找是否有满足用户需求的小块内存，如果没找到，则创建一个新的小块内存。
+ * @param *pool     要申请内存的内存池指针
+ * @param size      要申请的内存大小
+ */
 void *
 ngx_pnalloc(ngx_pool_t *pool, size_t size)
 {
     u_char      *m;
     ngx_pool_t  *p;
 
-    if (size <= pool->max) {
+    if (size <= pool->max) {    //如果申请内存大小 小于 每个数据块最大的申请大小（申请小内存），则继续想像内存池申请小块内存，否则去申请一块大块内存。
 
         p = pool->current;
 
         do {
             m = p->d.last;
 
-            if ((size_t) (p->d.end - m) >= size) {
+            if ((size_t) (p->d.end - m) >= size) {  //如果内存块中剩余可分配的内存 大于 要申请的内存，则分配成功，返回分配的内存首地址
                 p->d.last = m + size;
 
                 return m;
             }
-
+            //如果当前内存数据块没有足够的可分配内存，则指向下一个内存数据块，继续查找下一个内存数据块是否有合适大小的内存可以分配
             p = p->d.next;
 
         } while (p);
 
-        return ngx_palloc_block(pool, size);
+        //如果整个当前内存池中的所有数据块都没有满足的内存尺寸可以分配，则重新创建一个新的内存数据块,并返回在新建数据块上申请的内存首地址。
+        return ngx_palloc_block(pool, size);    
     }
 
+    //如果申请内存大小  大于  每个数据块的最大申请容量，则去申请大块内存
     return ngx_palloc_large(pool, size);
 }
 
-
+/*
+ * 创建新的小块内存
+ *
+ * @desc 创建新的小块内存，并插入到小块内存链表的末尾：
+ * @param *pool 要插入的内存池
+ * @param size 创建新的小块内存数据块后，返回在新数据块上要申请的内存大小。（这里的size一定得搞明白，并不要新创建内存数据块的大小）
+ */
 static void *
 ngx_palloc_block(ngx_pool_t *pool, size_t size)
 {
@@ -189,53 +209,65 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     size_t       psize;
     ngx_pool_t  *p, *new, *current;
 
-    psize = (size_t) (pool->d.end - (u_char *) pool);
+    psize = (size_t) (pool->d.end - (u_char *) pool);   //获取当前内存池的头结构（包括第一个内存数据块的结构以及总共可分配空间，在加上内存池头结构的几个变量） 所占内存大小
 
-    m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log);
+    //这里要注意的是，新分配的小内存数据块，ngx_pool_data_t 结构变量和数据区整体占用的容量，是和内存池第一块大小一样，但是内存池的第一块还包括内存池整体的几个变量 max,current,large,cheanup,log等。因此内存池链表的后边的数据块都要比内存池头上的数据块要大一点（这里大家不搞明白可能不好理解代码）。
+    m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log); // 分配数据对齐的内存地址，地址必须是16的倍数，也就是二进制地址的最后四位是0。NGX_POOL_ALIGNMENT 是内存池校准对齐常量，值为 16
     if (m == NULL) {
         return NULL;
     }
 
-    new = (ngx_pool_t *) m;
+    new = (ngx_pool_t *) m; //将新申请到的内存指针，转换为内存池类型的指针，这样就可以操作内存池内的结构了。
 
-    new->d.end = m + psize;
-    new->d.next = NULL;
-    new->d.failed = 0;
+    //给新小内存数据块的各个结构变量赋值。
+    new->d.end = m + psize; //end 指向新内存数据块的总的可分配内存的末尾地址
+    new->d.next = NULL; //本内存数据块是链表的最后一个，因此赋值为NULL
+    new->d.failed = 0;  //当前是新的数据块，分配失败次数初始化为0
 
-    m += sizeof(ngx_pool_data_t);
-    m = ngx_align_ptr(m, NGX_ALIGNMENT);
-    new->d.last = m + size;
+    m += sizeof(ngx_pool_data_t);   //m指针指向 ngx_pool_data_t结构体变量的末尾，即数据区的开始位置
+    m = ngx_align_ptr(m, NGX_ALIGNMENT);    //找到根据 ngx_align_ptr宏进行内存对齐后的地址，作为数据块数据区的开始位置。
+    new->d.last = m + size; //新内存数据块的下次内存分配的起始地址重新赋值（此处在新创建的内存数据块上直接分配了size的内存并最后返回给当前的函数调用者）
 
     current = pool->current;
 
+    //循环遍历整个内存池链表。每个数据块的分配次数加一。如果当前数据块的分配失败次数大于4次，则将current指针指向它的下一个数据块
     for (p = current; p->d.next; p = p->d.next) {
         if (p->d.failed++ > 4) {
             current = p->d.next;
         }
     }
 
+    //经过上面的循环p指针已经指向链表最后一个数据块。下面就是把新创建的new数据块，挂到链表最后一个数据块上。
     p->d.next = new;
 
+    //内存池的current指针，指向前面的一个fail次数小于等于4的数据块节点。如果整个链表都fail都超过4次了，则指向新创建的new节点。（也就是内存池的current总是指向失败次数小于等于4次的数据节点）
     pool->current = current ? current : new;
 
-    return m;
-}
+    return m;   //返回在新建数据块上申请到的容量为size的内存首地址，这个m指针是 u_char类型的。
 
 
+/*
+ * 分配大块内存
+ *
+ * @desc 
+ * @param *pool 
+ * @param size 
+ */
 static void *
 ngx_palloc_large(ngx_pool_t *pool, size_t size)
 {
     void              *p;
     ngx_uint_t         n;
-    ngx_pool_large_t  *large;
+    ngx_pool_large_t  *large;   //指向大块内存链表的某个节点的指针
 
-    p = ngx_alloc(size, pool->log);
+    p = ngx_alloc(size, pool->log); //申请一块size字节的普通内存。调用malloc函数
     if (p == NULL) {
         return NULL;
     }
 
     n = 0;
 
+    // 遍历大块内存链表，找到可以挂载 p大块内存 的位置。（因为创建新的大块内存都是挂接到链表的开头，所以这里限制最多往后找三次。这里的问题是，什么情况下回出现存在某个大块结构体变量，但是这个结构体变量的alloc变量是 NULL?）
     for (large = pool->large; large; large = large->next) {
         if (large->alloc == NULL) {
             large->alloc = p;
@@ -247,15 +279,18 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
         }
     }
 
-    large = ngx_palloc(pool, sizeof(ngx_pool_large_t));
+    large = ngx_palloc(pool, sizeof(ngx_pool_large_t)); //在小内存池上分配一块内存，存放大内存结构变量（这个乍看比较容易看错）。
+    //如果分配小内存失败，则把申请到的p指针指向的内存free掉。 p是局部变量，存储在栈上，因此不需要将其赋值为 NULL 。但是需要将p指向的内存空间 free掉
     if (large == NULL) {
-        ngx_free(p);
+        ngx_free(p);    // #define ngx_free          free
         return NULL;
     }
 
-    large->alloc = p;
-    large->next = pool->large;
-    pool->large = large;
+    large->alloc = p;   //将大块内存结构体变量（large）的 alloc变量，指向开头申请到的大块内存p。
+
+    //将内存池的large指针，指向刚申请到的large结构体变量（即在大块内存链表的开头插入新分配的大块内存结构体变量）
+    large->next = pool->large;  
+    pool->large = large;    
 
     return p;
 }

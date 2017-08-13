@@ -13,7 +13,11 @@ ngx_uint_t  ngx_pagesize;
 ngx_uint_t  ngx_pagesize_shift;
 ngx_uint_t  ngx_cacheline_size;
 
-
+/*
+ * nginx对malloc的简单封装
+ * @param size 要分配的内存大小
+ * @param *log nginx日志
+ */
 void *
 ngx_alloc(size_t size, ngx_log_t *log)
 {
@@ -30,7 +34,12 @@ ngx_alloc(size_t size, ngx_log_t *log)
     return p;
 }
 
-
+/*
+ * nginx自己封装的calloc
+ * @desc 这个有点奇怪，原来的calloc 是有两个参数指明数组元素个数，和每个元素的大小。这个封装没有数组的概念了。
+ * @param size 要分配的内存大小
+ * @param *log nginx日志
+ */
 void *
 ngx_calloc(size_t size, ngx_log_t *log)
 {
@@ -39,13 +48,21 @@ ngx_calloc(size_t size, ngx_log_t *log)
     p = ngx_alloc(size, log);
 
     if (p) {
-        ngx_memzero(p, size);
+        ngx_memzero(p, size);   // #define ngx_memzero(buf, n)       (void) memset(buf, 0, n)
     }
 
     return p;
 }
 
 
+
+/*
+ * nginx对 memalign或者posix_memalign 的封装。
+ * @desc 申请数据对齐的内存地址。根据系统不同，判断是有 posix_memalign 还是 memalign
+ * @param alignment 对齐字节长度（单位：字节）。分配的内存地址需要是 alignment 的倍数
+ * @param size 要分配的内存大小
+ * @param *log nginx日志
+ */
 #if (NGX_HAVE_POSIX_MEMALIGN)
 
 void *
