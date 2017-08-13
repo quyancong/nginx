@@ -30,7 +30,7 @@ struct ngx_list_part_s {
  */
 typedef struct {
     ngx_list_part_t  *last;     //指向链表的最后一个元素
-    ngx_list_part_t   part;     //俩表的收个元素
+    ngx_list_part_t   part;     //链表的首个元素
     size_t            size;     //限制数组里面的每个项占用的空间大小。用户存储一个数据所占用的字节数必须小于等于size
     ngx_uint_t        nalloc;   //每个ngx_list_part_t 数组的容量，即最多能存多少个数据
     ngx_pool_t       *pool;     //链表中管理内存分配的内存池对象。用户要存放的数据占用的内存都是由pool分配的

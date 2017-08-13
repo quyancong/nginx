@@ -122,7 +122,7 @@ ngx_reset_pool(ngx_pool_t *pool)
 }
 
 /*
- * 分配内存
+ * 从内存池中分配内存
  * @param *pool 内存池指针
  * @param size  分配的大小
  */
