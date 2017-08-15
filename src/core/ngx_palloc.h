@@ -52,7 +52,7 @@ struct ngx_pool_large_s {
 typedef struct {
     u_char               *last;     //当前内存池数据块分配到此处，下一次分配从这里继续分配
     u_char               *end;      //当前内存池数据块的结束为止。 last指针必须在 end指针的范围之内
-    ngx_pool_t           *next;     //指向下一个内存池数据块。这里为什么用 ngx_pool_t 而不是用 ngx_pool_data_t 声明指针？因为这里 ngx_pool_t 结构体的开头部分是 ngx_pool_data_t ，因此 ngx_pool_t 的指针可以用于操作 ngx_pool_data_t结构体变量。ngx_pool_t可以理解为一个”父结构体“
+    ngx_pool_t           *next;     //指向下一个内存池数据块。这里为什么用 ngx_pool_t 而不是用 ngx_pool_data_t 声明指针??????因为这里 ngx_pool_t 结构体的开头部分是 ngx_pool_data_t ，因此 ngx_pool_t 的指针可以用于操作 ngx_pool_data_t结构体变量。ngx_pool_t可以理解为一个”父结构体“
     ngx_uint_t            failed;   //内存块分配的时候大小不够，导致分配失败的次数。
 } ngx_pool_data_t;
 
