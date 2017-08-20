@@ -88,7 +88,10 @@ typedef struct {
     ngx_array_t      *dns_wc_tail_hash;
 } ngx_hash_keys_arrays_t;
 
-
+/*
+ * key，value 表结构
+ * 为 http 头信息量身定做， 例如 content-length:1024  
+ */
 typedef struct {
     ngx_uint_t        hash;
     ngx_str_t         key;
