@@ -108,6 +108,14 @@ struct ngx_open_file_s {
 #define NGX_MODULE_V1          0, 0, 0, 0, 0, 0, 1
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0
 
+/*
+ * nginx模块化的基础数据结构。
+ * 基本接口ngx_module_t只涉及模块的初始化、退出以及对配置项的处理。
+ * ngx_module_t结构体作为所有模块的通用接口，只定义了init_master 、init_module、init_process、init_thread、exit_thread、exit_process、exit_master这七个回调方法，
+ * 而init_master 、init_thread、exit_thread这三个方法目前没有使用，后两个是因为nginx目前没有使用线程（因为多线程代码实现更难控制）。
+ * 他们负责模块的初始化和退出，同时他们可以处理核心结构体ngx_cycle_t（每个进程都有一个该结构体变量）。
+ * 而ngx_command_t类型的commands数组指定了模块中的配置名和模块处理配置变量的方法，ctx是一个void*指针，他表示一类模块所特有的通用函数接口。
+ */
 struct  ngx_module_s {
     /* 对于一类模块（由下面的type成员决定类别）而言，ctx_index标示当前模块在这类模块中的序号。
     这个成员常常是由管理这类模块的一个nginx核心模块设置的，对于所有的HTTP模块而言，ctx_index
