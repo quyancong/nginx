@@ -138,6 +138,7 @@ struct  ngx_module_s {
     ngx_uint_t            index;
 
     /* spare系列的保留变量，暂未使用 */
+    ngx_uint_t            spare0;
     ngx_uint_t            spare1;
     ngx_uint_t            spare2;
     ngx_uint_t            spare3;
@@ -157,7 +158,7 @@ struct  ngx_module_s {
     NGX_EVENT_MODULE,NGX_MAIL_MODULE 。实际上，还可以自定义新的模块类型 */
     ngx_uint_t            type;
 
-    ngx_uint_t            spare0;
+
 
     /* 下面7个函数是nginx在启动，停止过程中的7个执行点 */
     ngx_int_t           (*init_master)(ngx_log_t *log);         //在master进程启动时候，回调init_master ，但到目前为止框架代码从来不会调用他，因此可以将其赋值为NULL
