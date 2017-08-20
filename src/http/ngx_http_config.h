@@ -21,18 +21,21 @@ typedef struct {
 } ngx_http_conf_ctx_t;
 
 
+/*
+ * 定义了8个方法接口，HTTP框架在不同的阶段中调用相应的方法
+ */
 typedef struct {
-    ngx_int_t   (*preconfiguration)(ngx_conf_t *cf);
-    ngx_int_t   (*postconfiguration)(ngx_conf_t *cf);
+    ngx_int_t   (*preconfiguration)(ngx_conf_t *cf);                            //解析配置文件前调用
+    ngx_int_t   (*postconfiguration)(ngx_conf_t *cf);                           //完成配置文件解析后调用
 
-    void       *(*create_main_conf)(ngx_conf_t *cf);
-    char       *(*init_main_conf)(ngx_conf_t *cf, void *conf);
+    void       *(*create_main_conf)(ngx_conf_t *cf);                            //当需要创建数据结构用于存储main级别（直属于http{...}块的配置项）的全局配置项时，可以通过create_main_conf回调方法创建存储全局配置项的结构体。
+    char       *(*init_main_conf)(ngx_conf_t *cf, void *conf);                  //常用语初始化main级别配置项
 
-    void       *(*create_srv_conf)(ngx_conf_t *cf);
-    char       *(*merge_srv_conf)(ngx_conf_t *cf, void *prev, void *conf);
+    void       *(*create_srv_conf)(ngx_conf_t *cf);                             //当需要创建数据结构用于存储srv级别（直属于虚拟主机server{...}块的配置项）的配置项时，可以通过实现create_srv_conf回调方法创建存储srv级别配置项的结构体。
+    char       *(*merge_srv_conf)(ngx_conf_t *cf, void *prev, void *conf);      //merge_srv_conf 主要用于合并main级别和srv级别下的同名配置项
 
-    void       *(*create_loc_conf)(ngx_conf_t *cf);
-    char       *(*merge_loc_conf)(ngx_conf_t *cf, void *prev, void *conf);
+    void       *(*create_loc_conf)(ngx_conf_t *cf);                             //当需要创建数据结构用于存储loc级别（直属于location{...}块的配置项）的配置项时，可以实现create_loc_conf回调方法
+    char       *(*merge_loc_conf)(ngx_conf_t *cf, void *prev, void *conf);      //merge_loc_conf回调方法主要用于合并srv级别和loc级别下的同名配置项
 } ngx_http_module_t;
 
 
