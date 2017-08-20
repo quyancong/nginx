@@ -108,11 +108,10 @@ struct ngx_open_file_s {
 #define NGX_MODULE_V1          0, 0, 0, 0, 0, 0, 1
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0
 
-struct ngx_module_s {
+struct  ngx_module_s {
     ngx_uint_t            ctx_index;
     ngx_uint_t            index;
 
-    ngx_uint_t            spare0;
     ngx_uint_t            spare1;
     ngx_uint_t            spare2;
     ngx_uint_t            spare3;
@@ -123,6 +122,7 @@ struct ngx_module_s {
     ngx_command_t        *commands;
     ngx_uint_t            type;
 
+    ngx_uint_t            spare0;
     ngx_int_t           (*init_master)(ngx_log_t *log);
 
     ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
