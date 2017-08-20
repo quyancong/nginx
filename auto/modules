@@ -382,6 +382,7 @@ if [ $MAIL_SSL = YES ]; then
     USE_OPENSSL=YES
 fi
 
+###############下面主要是根据配置生成modules变量#####################
 
 modules="$CORE_MODULES $EVENT_MODULES"
 
@@ -391,6 +392,8 @@ if [ $USE_OPENSSL = YES ]; then
     CORE_DEPS="$CORE_DEPS $OPENSSL_DEPS"
     CORE_SRCS="$CORE_SRCS $OPENSSL_SRCS"
 fi
+
+############### $HTTP_MODULES等变量已经在 config文件中重新定义了。 modules变量是包含所有模块的 ###############
 
 if [ $HTTP = YES ]; then
     modules="$modules $HTTP_MODULES $HTTP_FILTER_MODULES \
@@ -449,6 +452,10 @@ if [ $NGX_CPP_TEST = YES ]; then
     NGX_MISC_SRCS="$NGX_MISC_SRCS $NGX_CPP_TEST_SRCS"
 fi
 
+
+########################## 下面开始把 $modules 变量生在 ngx_modules.c 中生成数组 #######################
+
+# cat << END 是开启连续文本输入，在遇到第一个END后结束整块文本输入。
 
 cat << END                                    > $NGX_MODULES_C
 
