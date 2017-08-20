@@ -74,14 +74,26 @@
 
 #define NGX_MAX_CONF_ERRSTR  1024
 
-
+/*
+ * 定义模块的配置参数的结构体
+ */
 struct ngx_command_s {
-    ngx_str_t             name;
-    ngx_uint_t            type;
-    char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-    ngx_uint_t            conf;
-    ngx_uint_t            offset;
-    void                 *post;
+    ngx_str_t             name; //配置项的名称 如 gzip
+    ngx_uint_t            type; //配置项类型，type将指定配置项可以出现的位置。例如，出现在server{} 或者 localtion{}中，以及它可以携带的参数个数
+    char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf); //出现了name中指定的配置项后，将会调用set方法处理配置项的参数
+
+
+    /*
+     * 它的值可以是以下的一种，指明当前配置要放在main，srv，loc三种配置结构体哪一个结构体里。它和下面的 offset配合使用。
+        NGX_HTTP_MAIN_CONF_OFFSET
+        NGX_HTTP_SRV_CONF_OFFSET
+        NGX_HTTP_LOC_CONF_OFFSET
+    */
+    ngx_uint_t            conf; 
+
+
+    ngx_uint_t            offset;   //当前配置项在整个存储配置项的结构体中的偏移位置。对于使用Nginx预设的解析方法：Nginx首先通过conf成员找到应该用哪个结构体来存放，然后通过offset成员找到这个结构体中的相应成员，以便存放该配置。
+    void                 *post;     //配置项读取后的回调处理方法，必须是ngx_conf_post_t指针
 };
 
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
