@@ -164,10 +164,13 @@ typedef struct {
     ngx_uint_t                        offset;
 } ngx_http_header_out_t;
 
-
+/*
+ * 该结构体存储了已经解析过的HTTP头部信息
+ */
 typedef struct {
-    ngx_list_t                        headers;
+    ngx_list_t                        headers;  //所有解析过的HTTP头部都在headers链表中，可以用遍历链表的方法对该链表进行遍历（这里应该是这个结构体存储了ngx_table_elt_t类型元素，又单独存储一个链表的原因吧）。
 
+    /*以下每个ngx_table_elt_t成员都是RFC1616规范定义的HTTP头部，它们实际上指向headers链表中的相应成员，注意，当他们为NULL空指针时，表示没有解析到相应的HTTP头部*/
     ngx_table_elt_t                  *host;
     ngx_table_elt_t                  *connection;
     ngx_table_elt_t                  *if_modified_since;
@@ -212,16 +215,21 @@ typedef struct {
     ngx_table_elt_t                  *date;
 #endif
 
+
     ngx_str_t                         user;
     ngx_str_t                         passwd;
 
-    ngx_array_t                       cookies;
+    ngx_array_t                       cookies;  //ngx_array_t结构存储cookies信息
 
-    ngx_str_t                         server;
-    off_t                             content_length_n;
+    ngx_str_t                         server;   //server名称
+    off_t                             content_length_n; //off_t是声明一种文件大小的整形类型__int64_t。   根据ngx_table_elt_t*content_length 计算出包体大小??????
     time_t                            keep_alive_n;
 
-    unsigned                          connection_type:2;
+    /* unsigned 就是  unsigned int 的简写 */
+
+    unsigned                          connection_type:2;    // HTTP链接类型，它的取值范围是0，NGX_http_CONNECTION_CLOSE 或者 NGX_HTTP_CONNECTION_KEEP_ALIVE。即0,1,2
+
+    /* 以下7个标志位是HTTP框架根据浏览器传来的 useragent 头部，他们可用来判断浏览器的类型，值为1则为相应浏览器发来的请求 */
     unsigned                          msie:1;
     unsigned                          msie6:1;
     unsigned                          opera:1;
@@ -343,16 +351,25 @@ struct ngx_http_posted_request_s {
 typedef ngx_int_t (*ngx_http_handler_pt)(ngx_http_request_t *r);
 typedef void (*ngx_http_event_handler_pt)(ngx_http_request_t *r);
 
-
+/*
+ * http请求结构体(一次请求就对应着这么一个结构体变量)。
+ * 首先一个http请求包含请求消息与响应消息。请求消息包括请求行、请求头、请求体。响应消息包括响应行、响应头、响应体。
+   其次，在nginx中，ngx_http_request_t代表一个http请求，即ngx_http_request_t中包含了所有http请求的内容。可以说处理http请求就是操作ngx_http_request_t数据结构。
+   再次，关于message-body的存在与否，是与HTTP协议有关。
+   最后，得到请求后，我们处理请求产生需要输出的数据，再生成响应行、响应头、响应体。
+   另外，提到nginx的区别，当请求头读取完成后，就开始进行请求的处理。是因为nginx采用异步处理。在读取请求头后，就进行请求的处理，而对于message-body的处理则异步进行。
+ * http://tengine.taobao.org/book/chapter_2.html#request
+ * http://blog.csdn.net/xiajun07061225/article/details/9189505
+ */
 struct ngx_http_request_s {
     uint32_t                          signature;         /* "HTTP" */
 
-    ngx_connection_t                 *connection;
+    ngx_connection_t                 *connection;   //当前请求对应的客户端链接
 
-    void                            **ctx;
-    void                            **main_conf;
-    void                            **srv_conf;
-    void                            **loc_conf;
+    void                            **ctx;          //指向存放所有HTTP模块的上下文结构体的指针数组
+    void                            **main_conf;    //指向请求对应的存放main级别配置结构体的指针数组
+    void                            **srv_conf;     //指向请求对应的存放srv级别配置结构体的指针数组
+    void                            **loc_conf;     //指向请求对应的存放loc级别配置结构体的指针数组
 
     ngx_http_event_handler_pt         read_event_handler;
     ngx_http_event_handler_pt         write_event_handler;
