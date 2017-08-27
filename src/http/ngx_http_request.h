@@ -239,13 +239,14 @@ typedef struct {
     unsigned                          konqueror:1;
 } ngx_http_headers_in_t;
 
-
+/* 该结构存储了待响应的HTTP响应头 */
 typedef struct {
-    ngx_list_t                        headers;
+    ngx_list_t                        headers;  //待发送的HTTP头部链表，与headers_in中的headers成员类似
 
-    ngx_uint_t                        status;
-    ngx_str_t                         status_line;
+    ngx_uint_t                        status;   //响应中的状态值，如200表示成功。这些状态都有响应的宏定义，例如 NGX_HTTP_OK
+    ngx_str_t                         status_line;  //响应的状态行，如“HTTP/1.1 201 CREATED”
 
+    /* 下面成员都是RFC1616中定义的HTTP头部,设置后，ngx_http_header_filter_module 过滤模块可以把他们加到待发送的网络包中 */
     ngx_table_elt_t                  *server;
     ngx_table_elt_t                  *date;
     ngx_table_elt_t                  *content_length;
@@ -261,6 +262,7 @@ typedef struct {
 
     ngx_str_t                        *override_charset;
 
+    /* 可以调用ngx_http_set_content_type(r)方法帮助我们设置Content-Type头部，这个方法会根据URI中的文件扩展名并对应着mime.type来设置Content-type值 */
     size_t                            content_type_len;
     ngx_str_t                         content_type;
     ngx_str_t                         charset;
@@ -269,7 +271,7 @@ typedef struct {
 
     ngx_array_t                       cache_control;
 
-    off_t                             content_length_n;
+    off_t                             content_length_n; //这里指定过content_length_n后，不用再到ngx_table_elt_t *content_length 中设置响应长度
     time_t                            date_time;
     time_t                            last_modified_time;
 } ngx_http_headers_out_t;
