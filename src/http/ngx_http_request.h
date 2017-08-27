@@ -168,7 +168,7 @@ typedef struct {
  * 该结构体存储了已经解析过的HTTP头部信息
  */
 typedef struct {
-    ngx_list_t                        headers;  //所有解析过的HTTP头部都在headers链表中，可以用遍历链表的方法对该链表进行遍历（这里应该是这个结构体存储了ngx_table_elt_t类型元素，又单独存储一个链表的原因吧）。
+    ngx_list_t                        headers;  //所有解析过的HTTP头部都在headers链表中，可以用遍历链表的方法对该链表进行遍历（这里应该是这个结构体存储了ngx_table_elt_t类型元素，又单独存储一个链表的原因。另一个原因是，本结构体ngx_table_elt_t直接存储的只存储了常用的HTTP头，不常见的则会存储在headers链表中，需要遍历获得）。
 
     /*以下每个ngx_table_elt_t成员都是RFC1616规范定义的HTTP头部，它们实际上指向headers链表中的相应成员，注意，当他们为NULL空指针时，表示没有解析到相应的HTTP头部*/
     ngx_table_elt_t                  *host;
