@@ -37,7 +37,7 @@ typedef struct {
 } ngx_variable_value_t;
 
 
-#define ngx_string(str)     { sizeof(str) - 1, (u_char *) str }
+#define ngx_string(str)     { sizeof(str) - 1, (u_char *) str } // str是一个字符串常量，存放在静态内存区吗??????。 字符串的实际长度是size-1 因为最后一个字符是\0
 #define ngx_null_string     { 0, NULL }
 #define ngx_str_set(str, text)                                               \
     (str)->len = sizeof(text) - 1; (str)->data = (u_char *) text
