@@ -31,7 +31,7 @@ struct ngx_buf_s {
     u_char          *start;         /* start of buffer */   //缓冲区开始的指针地址
     u_char          *end;           /* end of buffer */     //缓冲区结尾的指针地址
     ngx_buf_tag_t    tag;           //缓冲区标记地址，是一个void类型的指针。
-    ngx_file_t      *file;          //引用的文件
+    ngx_file_t      *file;          //引用的文件（指向一个nginx文件结构体）
     ngx_buf_t       *shadow;
 
 
