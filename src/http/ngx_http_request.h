@@ -533,7 +533,7 @@ struct ngx_http_request_s {
     unsigned                          main_filter_need_in_memory:1;
     unsigned                          filter_need_in_memory:1;
     unsigned                          filter_need_temporary:1;
-    unsigned                          allow_ranges:1;
+    unsigned                          allow_ranges:1;   //是否允许range协议，用来支持断点续传和多线程下载 
 
 #if (NGX_STAT_STUB)
     unsigned                          stat_reading:1;
