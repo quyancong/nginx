@@ -36,7 +36,7 @@ typedef struct ngx_pool_cleanup_s  ngx_pool_cleanup_t;
  */
 struct ngx_pool_cleanup_s {
     ngx_pool_cleanup_pt   handler;  //执行实际清理资源工作的回调方法
-    void                 *data;     //handler回调方法需要的参数
+    void                 *data;     //handler回调方法需要的参数 (data 一般为 ngx_pool_cleanup_file_t 清理文件结构体的变量)
     ngx_pool_cleanup_t   *next;     //下一个ngx_pool_cleanup_t 清理对象，如果没有，需设置为NULL
 };
 
