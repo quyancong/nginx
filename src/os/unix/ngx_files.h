@@ -55,6 +55,7 @@ typedef struct {
 
 #define NGX_HAVE_CASELESS_FILESYSTEM  1
 
+/* 对linux的open文件打开函数封装了一个宏，整体变化不大 */
 #define ngx_open_file(name, mode, create, access)                            \
     open((const char *) name, mode|create|O_BINARY, access)
 
