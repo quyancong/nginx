@@ -245,7 +245,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 
     return m;   //返回在新建数据块上申请到的容量为size的内存首地址，这个m指针是 u_char类型的。
 
-
+}
 /*
  * 分配大块内存
  *
