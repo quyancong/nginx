@@ -201,23 +201,25 @@ typedef struct {
 typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
     ngx_command_t *dummy, void *conf);
 
-
+/*
+ * 用于Nginx在解析配置文件时描述每个指令的属性
+ */
 struct ngx_conf_s {
-    char                 *name;
-    ngx_array_t          *args;
+    char                 *name; //存放当前解析到的指令
+    ngx_array_t          *args; //存放该指令包含的所有参数
 
-    ngx_cycle_t          *cycle;
-    ngx_pool_t           *pool;
-    ngx_pool_t           *temp_pool;
-    ngx_conf_file_t      *conf_file;
-    ngx_log_t            *log;
+    ngx_cycle_t          *cycle;    //指向系统参数，在系统整个运行过程中，需要使用的一些参数、资源需要统一的管理
+    ngx_pool_t           *pool; //内存池
+    ngx_pool_t           *temp_pool;    //用于解析配置文件的临时内存池，解析完成后释放。
+    ngx_conf_file_t      *conf_file;    //存放Nginx配置文件的相关信息
+    ngx_log_t            *log;  //描述日志文件的相关属性
 
-    void                 *ctx;
-    ngx_uint_t            module_type;
-    ngx_uint_t            cmd_type;
+    void                 *ctx;  //描述指令的上下文
+    ngx_uint_t            module_type;  //支持该指令的模块的类型，core、http、event和mail中的一种
+    ngx_uint_t            cmd_type; //指令的类型
 
-    ngx_conf_handler_pt   handler;
-    char                 *handler_conf;
+    ngx_conf_handler_pt   handler;  //指令自定义的处理函数
+    char                 *handler_conf; //自定义处理函数需要的相关配置
 };
 
 
